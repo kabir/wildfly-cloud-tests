@@ -134,6 +134,8 @@ public class ElytronOidcClientTestCaseIT extends WildFlyCloudTestCase {
         }
         Assertions.assertNotNull(keycloakPort, "nodePort of keycloak server is not found in service");
         loginToApp("demo", "demo", new URL("http://" + client.getMasterUrl().getHost() + ":" + appPort + "/secured"));
+
+        throw new IllegalStateException("Failure to see if logs get dumped on CI");
     }
 
     public static void loginToApp(String username, String password, URL requestUri) throws Exception {
