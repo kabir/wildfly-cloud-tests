@@ -26,6 +26,10 @@ import java.util.List;
 import java.util.Map;
 
 class WildFlyIntegrationTestConfigDelegate {
+
+    private static final String NAMESPACE_STRATEGY = "wildfly.test.namespace.strategy";
+    private static final String NAMESPACE_STRATEGY_RANDOM = "random";
+
     private final String namespace;
     private final List<KubernetesResource> kubernetesResources;
     private final Map<String, ConfigPlaceholderReplacer> placeholderReplacements;
@@ -53,13 +57,33 @@ class WildFlyIntegrationTestConfigDelegate {
     }
 
     static WildFlyIntegrationTestConfigDelegate create(WildFlyKubernetesIntegrationTest annotation) {
+        String namespace = namespaceFromStrategy(annotation.namespace());
         return new WildFlyIntegrationTestConfigDelegate(
-                annotation.namespace(), annotation.kubernetesResources(), annotation.placeholderReplacements(), annotation.extraTestSetup());
+                namespace, annotation.kubernetesResources(), annotation.placeholderReplacements(), annotation.extraTestSetup());
     }
 
     static WildFlyIntegrationTestConfigDelegate create(WildFlyOpenshiftIntegrationTest annotation) {
+        String namespace = namespaceFromStrategy("");
         return new WildFlyIntegrationTestConfigDelegate(
-                "", annotation.kubernetesResources(), annotation.placeholderReplacements(), annotation.extraTestSetup());
+                namespace, annotation.kubernetesResources(), annotation.placeholderReplacements(), annotation.extraTestSetup());
+    }
+
+    private static String namespaceFromStrategy(String namespaceFromAnnotation) {
+        String namespaceStrategy = System.getProperty(NAMESPACE_STRATEGY);
+        if (namespaceStrategy == null) {
+            return namespaceFromAnnotation;
+        } else if (namespaceStrategy.equals(NAMESPACE_STRATEGY_RANDOM)) {
+            System.out.println("Selected namespace strategy:" + NAMESPACE_STRATEGY_RANDOM);
+            // TODO - for the strimzi test we will need to change the namespace
+            // used by the test. Also, we will need to massage the URL it uses
+            // to download the massive YAML
+
+            // TODO - find a better way to do this. GUIDs feel a bit long
+            String ns = "wf-test" + System.currentTimeMillis();
+            System.out.println("Calculated namespace name: " + ns);
+            return ns;
+        }
+        throw new IllegalStateException("Unknown value for -D" + NAMESPACE_STRATEGY + ":" + NAMESPACE_STRATEGY_RANDOM);
     }
 
     public String getNamespace() {

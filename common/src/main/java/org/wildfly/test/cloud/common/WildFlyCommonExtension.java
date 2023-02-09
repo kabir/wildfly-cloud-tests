@@ -568,7 +568,7 @@ abstract class WildFlyCommonExtension implements WithDiagnostics, WithKubernetes
         }
 
         private void switchKubeCtlNamespace() throws Exception {
-            System.out.println("Switching namespace to " + namespace);
+            System.out.println("Switching Kubernetes client namespace to " + namespace);
             ProcessBuilder pb = new ProcessBuilder(extensionType.cliName, "config", "set-context", "--current", "--namespace=" + namespace);
             Process process = pb.start();
 
@@ -579,7 +579,7 @@ abstract class WildFlyCommonExtension implements WithDiagnostics, WithKubernetes
             int exit = process.waitFor();
 
             if (exit != 0) {
-                throw new IllegalStateException("Error changing namespace to " + namespace);
+                throw new IllegalStateException("Error changing Kubernetes client namespace to " + namespace);
             }
         }
     }
@@ -674,6 +674,7 @@ abstract class WildFlyCommonExtension implements WithDiagnostics, WithKubernetes
                 }
 
                 if (!foundNs) {
+                    System.out.printf("Namespace %s not found. Creating it.\n", config.getNamespace());
                     Namespace ns =
                             new NamespaceBuilder()
                                     .withNewMetadata()
@@ -697,6 +698,7 @@ abstract class WildFlyCommonExtension implements WithDiagnostics, WithKubernetes
                 NamespaceList list = namespaceOperation.list();
                 for (Namespace namespace : list.getItems()) {
                     if (namespace.getMetadata().getName().equals(config.getNamespace())) {
+                        System.out.println("Deleting created namespace: " + config.getNamespace());
                         namespaceOperation.delete(namespace);
                     }
                 }
