@@ -93,22 +93,30 @@ jobs:
       
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: Checkout WildFly main branch
-        if: ${{!github.event.client_payload}}
+#      - name: Checkout WildFly main branch
+#        if: ${{!github.event.client_payload}}
+#        uses: actions/checkout@v4
+#        with:
+#          path: wildfly
+#          fetch-depth: 1
+#          repository: 'wildfly/wildfly'
+#
+#      - name: Checkout WildFly PR branch
+#        if: ${{github.event.client_payload}}
+#        uses: actions/checkout@v4
+#        with:
+#          path: wildfly
+#          fetch-depth: 1
+#          repository: ${{github.event.client_payload.triggerRepo}}
+#          ref: ${{github.event.client_payload.ref}}
+      - name: Checkout Jason's WildFLy branch
         uses: actions/checkout@v4
         with:
           path: wildfly
           fetch-depth: 1
-          repository: 'wildfly/wildfly'
+          repository: jasondlee/wildfly
+          ref: WFLY-18736
 
-      - name: Checkout WildFly PR branch
-        if: ${{github.event.client_payload}}
-        uses: actions/checkout@v4
-        with:
-          path: wildfly
-          fetch-depth: 1
-          repository: ${{github.event.client_payload.triggerRepo}}
-          ref: ${{github.event.client_payload.ref}}
 
       - name: Checkout WildFly Cloud Tests
         uses: actions/checkout@v4
@@ -211,18 +219,20 @@ jobs:
           max_attempts: 3
           command: docker login -u $(oc whoami) -p $(oc whoami -t)  $OPENSHIFT_IMAGE_REGISTRY
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
-
       - name: Run Cloud Tests
         # This builds the provisioned images and runs the main (i.e. non-manual) tests
         # Since the manual tests reuse these images, we don't need to use
         # ${RUNTIME_IMAGE_OVERRIDE} elsewhere.
         run: |
           echo "Runtime image: ${RUNTIME_IMAGE_OVERRIDE}"
-          mvn -B install -Pimages -fae -Dversion.wildfly=${VERSION_WILDFLY} ${RUNTIME_IMAGE_OVERRIDE} ${OPENSHIFT_MAVEN_PARAMETERS} -Dwildfly.test.print.logs -Dwildfly.test.print.server-config
+          mvn -B install -Pimages -pl images/cloud-server,images/opentelemetry -am -Dversion.wildfly=${VERSION_WILDFLY} ${RUNTIME_IMAGE_OVERRIDE} ${OPENSHIFT_MAVEN_PARAMETERS} -DskipTests
+          mvn -B install -pl tests/observability/opentelemetry -am -fae -Dversion.wildfly=${VERSION_WILDFLY} ${RUNTIME_IMAGE_OVERRIDE} ${OPENSHIFT_MAVEN_PARAMETERS} -Dwildfly.test.print.logs=true -Dmaven.test.redirectTestOutputToFile=false -Dwildfly.test.print.server-config
         working-directory: cloud-tests
+
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.debug_enabled }}
+
 
       - name: Run RHOSAK Tests
         if: ${{env.RHOSAK_PARAMETERS}}
