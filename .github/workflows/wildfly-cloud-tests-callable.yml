@@ -93,22 +93,29 @@ jobs:
       
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - name: Checkout WildFly main branch
-        if: ${{!github.event.client_payload}}
+      #      - name: Checkout WildFly main branch
+      #        if: ${{!github.event.client_payload}}
+      #        uses: actions/checkout@v4
+      #        with:
+      #          path: wildfly
+      #          fetch-depth: 1
+      #          repository: 'wildfly/wildfly'
+      #
+      #      - name: Checkout WildFly PR branch
+      #        if: ${{github.event.client_payload}}
+      #        uses: actions/checkout@v4
+      #        with:
+      #          path: wildfly
+      #          fetch-depth: 1
+      #          repository: ${{github.event.client_payload.triggerRepo}}
+      #          ref: ${{github.event.client_payload.ref}}
+      - name: Checkout WIP WildFLy branch
         uses: actions/checkout@v4
         with:
           path: wildfly
           fetch-depth: 1
-          repository: 'wildfly/wildfly'
-
-      - name: Checkout WildFly PR branch
-        if: ${{github.event.client_payload}}
-        uses: actions/checkout@v4
-        with:
-          path: wildfly
-          fetch-depth: 1
-          repository: ${{github.event.client_payload.triggerRepo}}
-          ref: ${{github.event.client_payload.ref}}
+          repository: kabir/wildfly
+          ref: jason-with-kabir-changes
 
       - name: Checkout WildFly Cloud Tests
         uses: actions/checkout@v4
